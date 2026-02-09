@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Status de Respostas - Projeto Estagiário</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f6fa;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    li {
+      padding: 6px 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+
+    .ok { color: #0a8f3c; font-weight: bold; }
+    .pendente { color: #c0392b; font-weight: bold; }
+
+    .info {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Status de Respostas - Estagiário de Tecnologia</h1>
+
+<div class="info">
+  Dados carregados automaticamente da planilha do Google Sheets
+</div>
+
+<div class="container">
+  <div class="card">
+    <h2>✅ Unidades que JÁ responderam</h2>
+    <ul id="responderam"></ul>
+  </div>
+
+  <div class="card">
+    <h2>❌ Unidades que NÃO responderam</h2>
+    <ul id="naoResponderam"></ul>
+  </div>
+</div>
+
+<script>
+const SHEET_ID = "1otGqJDROFveqHbv3ULXfZxfIBGp2vC1NuS1dMmyHDbw";
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYXDv7VAbE1RPavA8zHMUNniI5KZGmSxCF3d4OIxOHD9eUVMSRyg6Yyc7GU4EfMaCY0y6pGEaDiijQ/pub?output=csv';
+
+// ⚠️ LISTA MESTRA DE TODAS AS UNIDADES (VOCÊ PODE EDITAR AQUI)
+const TODAS_UNIDADES = [
+"ESCOLA ESTADUAL ADAIL JARBAS DUCLOS",
+"ESCOLA ESTADUAL AFONSO MORENO",
+"ESCOLA ESTADUAL ALADINO POLON",
+"ESCOLA ESTADUAL ALBERTO GRAF CAPITAO",
+"ESCOLA ESTADUAL ALBINO FIORE",
+"ESCOLA ESTADUAL ALFRIED THEODOR WEISZFLOG",
+"ESCOLA ESTADUAL ANA MARIA GARRIDO ORLANDIN PROFESSORA",
+"ESCOLA ESTADUAL APARECIDO ROBERTO TONELLOTTI PROFESSOR",
+"ESCOLA ESTADUAL ARMANDO SESTINI",
+"ESCOLA ESTADUAL ARTHUR WEINGRILL",
+"ESCOLA ESTADUAL AZEVEDO SOARES",
+"ESCOLA ESTADUAL BAIRRO DO ITAIM",
+"ESCOLA ESTADUAL BAIRRO JUNDIAIZINHO",
+"ESCOLA ESTADUAL BELEM DA SERRA",
+"ESCOLA ESTADUAL BENEDITO APARECIDO TAVARES PROFESSOR",
+"ESCOLA ESTADUAL BENEDITO FAGUNDES MARQUES",
+"ESCOLA ESTADUAL BUENO DE AZEVEDO FILHO PROFESSOR",
+"ESCOLA ESTADUAL CARLOS AUGUSTO DE PADUA FLEURY PROFESSOR",
+"ESCOLA ESTADUAL CELESTINA VALENTE LENGENFELDER PROFESSORA",
+"ESCOLA ESTADUAL CHACARA CAMPONESA - JARDIM VASSOURAS",
+"ESCOLA ESTADUAL DOMINGOS CAMBIAGHI PROFESSOR",
+"ESCOLA ESTADUAL ELCIO JOSE PEREIRA CONTRIM PROFESSOR",
+"ESCOLA ESTADUAL ELVIRA PARADA MANGA PROFESSORA",
+"ESCOLA ESTADUAL FRANCISCO GONCALVES VIEIRA PROFESSOR",
+"ESCOLA ESTADUAL HERMELINA DE ALBUQUERQUE PASSARELLA PROFESSORA",
+"ESCOLA ESTADUAL IRACI SARTORI VIEIRA DA SILVA PROFESSORA",
+"ESCOLA ESTADUAL ISAIAS LUIZ MATIAZZO",
+"ESCOLA ESTADUAL ISAURA DE MIRANDA BOTTO PROFESSORA",
+"ESCOLA ESTADUAL ISAURA VALENTINI HANSER PROFESSORA",
+"ESCOLA ESTADUAL IVONE DOS ANJOS DA SILVA CAMPOS PROFA",
+"ESCOLA ESTADUAL JARDIM ALEGRIA II",
+"ESCOLA ESTADUAL JARDIM DAS ROSAS",
+"ESCOLA ESTADUAL JARDIM SAO FRANCISCO",
+"ESCOLA ESTADUAL JARDIM SILVIA II",
+"ESCOLA ESTADUAL JOAQUIM MARQUES DA SILVA SOBRINHO TENENTE",
+"ESCOLA ESTADUAL JOCIMARA VIEIRA DA SILVA PROFA",
+"ESCOLA ESTADUAL JOSE CARLOS DA SILVA JUNIOR",
+"ESCOLA ESTADUAL JOSE DE BARROS MARTINS EDITOR",
+"ESCOLA ESTADUAL JOSE PARADA PROFESSOR",
+"ESCOLA ESTADUAL JOSE ROBERTO MELCHIOR DOUTOR",
+"ESCOLA ESTADUAL KATIA MARIA TARIFA LEME TONELLI PROFESSORA",
+"ESCOLA ESTADUAL LENITA CORREA CAMARGO PROFESSORA",
+"ESCOLA ESTADUAL LUIZ ALEXANDRE DOS SANTOS VEREADOR",
+"ESCOLA ESTADUAL LYDIA SCALET WALKER PROFESSORA",
+"ESCOLA ESTADUAL MARIA ZEZA GOMES DE OLIVEIRA",
+"ESCOLA ESTADUAL MARIO TOLEDO DE MORAES DOUTOR",
+"ESCOLA ESTADUAL NAIR HANNICKEL ROMARO",
+"ESCOLA ESTADUAL NELSON MANZANARES DOUTOR",
+"ESCOLA ESTADUAL NIDE ZAIM CARDOSO PROFESSORA",
+"ESCOLA ESTADUAL ODARICO OLIVEIRA NASCIMENTO PROFESSOR",
+"ESCOLA ESTADUAL OLINDO DARTORA DOUTORA",
+"ESCOLA ESTADUAL OTTO WEISZFLOG",
+"ESCOLA ESTADUAL OZILDE ALBUQUERQUE PASSARELLA DOUTOR",
+"ESCOLA ESTADUAL PARQUE CENTO E VINTE II",
+"ESCOLA ESTADUAL PAULO DUARTE",
+"ESCOLA ESTADUAL PEDRO GALRAO DO NASCIMENTO",
+"ESCOLA ESTADUAL PEDRO LELIS DE SOUZA PREFEITO",
+"ESCOLA ESTADUAL PEDRO PAULO DE AGUIAR",
+"ESCOLA ESTADUAL PIETRO PETRI",
+"ESCOLA ESTADUAL RITUCO MITANI PROFESSORA",
+"ESCOLA ESTADUAL ROGERIO LEVORIN PROFESSOR",
+"ESCOLA ESTADUAL SUZANA DIAS",
+"ESCOLA ESTADUAL ULYSSES SANCHES RAMIRES PROFESSOR",
+"ESCOLA ESTADUAL VINCENZO LOBASSI",
+"ESCOLA ESTADUAL WALTER RIBAS DE ANDRADE PROFESSOR",
+"ESCOLA ESTADUAL WALTER WEISZFLOG",
+"ESCOLA ESTADUAL ZILTON BICUDO PROFESSOR"
+  // 👉 Coloque aqui TODAS as UEs da URE
+];
+
+fetch(CSV_URL)
+  .then(response => response.text())
+  .then(csv => {
+    const linhas = csv.split("\n");
+    const responderamSet = new Set();
+
+    linhas.forEach((linha, index) => {
+      if (index === 0) return; // pula cabeçalho
+
+      const colunas = linha.split(",");
+      const unidadeColunaC = colunas[2]; // Coluna C (índice 2)
+
+      if (unidadeColunaC && unidadeColunaC.trim() !== "") {
+        responderamSet.add(unidadeColunaC.trim());
+      }
+    });
+
+    const responderam = Array.from(responderamSet).sort();
+    const naoResponderam = TODAS_UNIDADES
+      .filter(u => !responderamSet.has(u))
+      .sort();
+
+    const ulResponderam = document.getElementById("responderam");
+    const ulNaoResponderam = document.getElementById("naoResponderam");
+
+    responderam.forEach(u => {
+      const li = document.createElement("li");
+      li.className = "ok";
+      li.textContent = u;
+      ulResponderam.appendChild(li);
+    });
+
+    naoResponderam.forEach(u => {
+      const li = document.createElement("li");
+      li.className = "pendente";
+      li.textContent = u;
+      ulNaoResponderam.appendChild(li);
+    });
+  })
+  .catch(err => {
+    alert("Erro ao carregar planilha: " + err);
+    console.error(err);
+  });
+</script>
+
+</body>
+</html>
