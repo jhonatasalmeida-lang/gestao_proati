@@ -8,14 +8,56 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f2f6fa;
+      background: linear-gradient(135deg, #e8f0fe, #f7faff);
       padding: 20px;
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 10px;
+      color: #1f3c88;
     }
+
+    .info {
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    /* RESUMO TOPO */
+    .resumo {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto 30px auto;
+    }
+
+    .resumo-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    }
+
+    .resumo-card h3 {
+      margin: 0;
+      font-size: 15px;
+      color: #666;
+      font-weight: normal;
+    }
+
+    .resumo-card .numero {
+      font-size: 42px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .total { color: #2c3e50; }
+    .respondidas { color: #1e8e3e; }
+    .nao-respondidas { color: #c0392b; }
 
     .container {
       display: grid;
@@ -27,15 +69,25 @@
 
     .card {
       background: #ffffff;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 20px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      border-top: 6px solid transparent;
+    }
+
+    .card.ok-card {
+      border-top-color: #2ecc71;
+    }
+
+    .card.pendente-card {
+      border-top-color: #e74c3c;
     }
 
     .card h2 {
       margin-top: 0;
-      border-bottom: 2px solid #ddd;
+      border-bottom: 2px solid #eee;
       padding-bottom: 10px;
+      font-size: 18px;
     }
 
     ul {
@@ -51,14 +103,24 @@
       font-size: 14px;
     }
 
-    .ok { color: #0a8f3c; font-weight: bold; }
-    .pendente { color: #c0392b; font-weight: bold; }
+    .ok { 
+      color: #1e8e3e; 
+      font-weight: bold; 
+    }
 
-    .info {
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 14px;
-      color: #555;
+    .pendente { 
+      color: #c0392b; 
+      font-weight: bold; 
+    }
+
+    /* Scroll mais bonito */
+    ul::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ul::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -70,23 +132,39 @@
   Dados carregados automaticamente da planilha do Google Sheets
 </div>
 
+<!-- RESUMO -->
+<div class="resumo">
+  <div class="resumo-card">
+    <h3>Total de Escolas</h3>
+    <div class="numero total" id="totalEscolas">0</div>
+  </div>
+
+  <div class="resumo-card">
+    <h3>Já Responderam</h3>
+    <div class="numero respondidas" id="totalResponderam">0</div>
+  </div>
+
+  <div class="resumo-card">
+    <h3>Não Responderam</h3>
+    <div class="numero nao-respondidas" id="totalNaoResponderam">0</div>
+  </div>
+</div>
+
 <div class="container">
-  <div class="card">
+  <div class="card ok-card">
     <h2>✅ Unidades que JÁ responderam</h2>
     <ul id="responderam"></ul>
   </div>
 
-  <div class="card">
+  <div class="card pendente-card">
     <h2>❌ Unidades que NÃO responderam</h2>
     <ul id="naoResponderam"></ul>
   </div>
 </div>
 
 <script>
-const SHEET_ID = "1otGqJDROFveqHbv3ULXfZxfIBGp2vC1NuS1dMmyHDbw";
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYXDv7VAbE1RPavA8zHMUNniI5KZGmSxCF3d4OIxOHD9eUVMSRyg6Yyc7GU4EfMaCY0y6pGEaDiijQ/pub?output=csv';
 
-// ⚠️ LISTA MESTRA DE TODAS AS UNIDADES (VOCÊ PODE EDITAR AQUI)
 const TODAS_UNIDADES = [
 "ESCOLA ESTADUAL ADAIL JARBAS DUCLOS",
 "ESCOLA ESTADUAL AFONSO MORENO",
@@ -155,7 +233,6 @@ const TODAS_UNIDADES = [
 "ESCOLA ESTADUAL WALTER RIBAS DE ANDRADE PROFESSOR",
 "ESCOLA ESTADUAL WALTER WEISZFLOG",
 "ESCOLA ESTADUAL ZILTON BICUDO PROFESSOR"
-  // 👉 Coloque aqui TODAS as UEs da URE
 ];
 
 fetch(CSV_URL)
@@ -165,10 +242,10 @@ fetch(CSV_URL)
     const responderamSet = new Set();
 
     linhas.forEach((linha, index) => {
-      if (index === 0) return; // pula cabeçalho
+      if (index === 0) return;
 
       const colunas = linha.split(",");
-      const unidadeColunaC = colunas[2]; // Coluna C (índice 2)
+      const unidadeColunaC = colunas[2];
 
       if (unidadeColunaC && unidadeColunaC.trim() !== "") {
         responderamSet.add(unidadeColunaC.trim());
@@ -180,6 +257,7 @@ fetch(CSV_URL)
       .filter(u => !responderamSet.has(u))
       .sort();
 
+    // LISTAS
     const ulResponderam = document.getElementById("responderam");
     const ulNaoResponderam = document.getElementById("naoResponderam");
 
@@ -196,6 +274,11 @@ fetch(CSV_URL)
       li.textContent = u;
       ulNaoResponderam.appendChild(li);
     });
+
+    // CONTADORES
+    document.getElementById("totalEscolas").textContent = TODAS_UNIDADES.length;
+    document.getElementById("totalResponderam").textContent = responderam.length;
+    document.getElementById("totalNaoResponderam").textContent = naoResponderam.length;
   })
   .catch(err => {
     alert("Erro ao carregar planilha: " + err);
