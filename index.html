@@ -28,7 +28,7 @@
     /* RESUMO TOPO */
     .resumo {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 20px;
       max-width: 1200px;
       margin: 0 auto 30px auto;
@@ -58,6 +58,7 @@
     .total { color: #2c3e50; }
     .respondidas { color: #1e8e3e; }
     .nao-respondidas { color: #c0392b; }
+    .percentual { color: #f39c12; }
 
     .container {
       display: grid;
@@ -113,7 +114,6 @@
       font-weight: bold; 
     }
 
-    /* Scroll mais bonito */
     ul::-webkit-scrollbar {
       width: 6px;
     }
@@ -147,6 +147,11 @@
   <div class="resumo-card">
     <h3>Não Responderam</h3>
     <div class="numero nao-respondidas" id="totalNaoResponderam">0</div>
+  </div>
+
+  <div class="resumo-card">
+    <h3>% de Respostas</h3>
+    <div class="numero percentual" id="percentualResponderam">0%</div>
   </div>
 </div>
 
@@ -257,7 +262,6 @@ fetch(CSV_URL)
       .filter(u => !responderamSet.has(u))
       .sort();
 
-    // LISTAS
     const ulResponderam = document.getElementById("responderam");
     const ulNaoResponderam = document.getElementById("naoResponderam");
 
@@ -276,9 +280,16 @@ fetch(CSV_URL)
     });
 
     // CONTADORES
-    document.getElementById("totalEscolas").textContent = TODAS_UNIDADES.length;
-    document.getElementById("totalResponderam").textContent = responderam.length;
-    document.getElementById("totalNaoResponderam").textContent = naoResponderam.length;
+    const total = TODAS_UNIDADES.length;
+    const totalResp = responderam.length;
+    const totalNao = naoResponderam.length;
+
+    const percentual = total > 0 ? ((totalResp / total) * 100).toFixed(1) : 0;
+
+    document.getElementById("totalEscolas").textContent = total;
+    document.getElementById("totalResponderam").textContent = totalResp;
+    document.getElementById("totalNaoResponderam").textContent = totalNao;
+    document.getElementById("percentualResponderam").textContent = percentual + "%";
   })
   .catch(err => {
     alert("Erro ao carregar planilha: " + err);
